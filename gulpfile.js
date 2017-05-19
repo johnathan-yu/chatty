@@ -1,13 +1,14 @@
 /*jslint node: true, vars: true, plusplus: true, devel: true, nomen: true, indent: 4, maxerr: 50 */
 (function () {
     'use strict';
-    var gulp = require('gulp');
+    var $ = require('gulp-load-plugins')({lazy: true});
     var args = require('yargs').argv;
     var browserSync = require('browser-sync');
-    var wiredep = require('wiredep').stream;
-    var $ = require('gulp-load-plugins')({lazy: true});
-    var gulpif = require('gulp-if'); // Cannot lazy load this because of reserve word "if" issue.
     var config = require('./gulp.config')();
+    var del = require('delete');
+    var gulp = require('gulp');
+    var gulpif = require('gulp-if'); // Cannot lazy load this because of reserve word "if" issue.
+    var wiredep = require('wiredep').stream;
     
     function log(msg) {
         if (typeof (msg) === 'object') {
@@ -22,6 +23,19 @@
         }
     }
     
+    function clean(path, done) {
+        log('Cleaning: ' + $.util.colors.cyan(path));
+        
+        del.promise(path).then(
+            function (err) {
+                if (err) {
+                    throw err;
+                }
+                done();
+            }
+        );
+    }
+    
     function startBrowserSync() {
         if (args.nosync || browserSync.active) {
             return;
@@ -32,7 +46,7 @@
         var options = {
             proxy: 'localhost:' + config.env.port,
             port: 4000,
-            files: [config.clientSrc + '**/*.*'],
+            files: [config.client + '**/*.*'],
             ghostMode: {
                 clicks: true,
                 location: false,
@@ -53,6 +67,33 @@
     
     gulp.task('help', $.taskListing);
     gulp.task('default', ['help']);
+    
+    gulp.task('clean-code', function (done) {
+        var files = [].concat(
+            config.temp + "**/*.js",
+            config.build + "**/*.html",
+            config.build + "js/**/*.js"
+        );
+
+        clean(files, done);
+    });
+    
+    gulp.task('templatecache', ['clean-code'], function () {
+        log('Creating AngularJS $templateCache: ' + config.htmltemplates);
+        
+        return gulp.src(
+            config.htmltemplates
+        ).pipe(
+            $.minifyHtml({empty: true})
+        ).pipe(
+            $.angularTemplatecache(
+                config.templateCache.file,
+                config.templateCache.options
+            )
+        ).pipe(
+            gulp.dest(config.temp)
+        );
+    });
 
     gulp.task('vet', function () {
         log('Analyzing source with JSHint and JSCS');
@@ -73,33 +114,33 @@
 
         var options = {
             bowerJson: require(config.bowerJson),
-            ignorePath: config.wiredepIgnorePath
+            ignorePath: config.wiredep.ignorePath
         };
         
-        return gulp.src(config.viewSrc + '/*.html').pipe(
+        return gulp.src(config.htmltemplates).pipe(
             wiredep(options)
         ).pipe(
-            gulp.dest(config.viewSrc)
+            gulp.dest(config.wiredep.destination)
         );
     });
     
     gulp.task('inject', function () {
         log('Injecting custom depencies');
         
-        var customJsCss = [].concat(config.customJs, config.customCss);
+        var customJsCss = [].concat(config.inject.files);
         var injectSrc = gulp.src(customJsCss, {read: false});
         var injectOptions = {
-            ignorePath: config.injectIgnorePath
+            ignorePath: config.inject.ignorePath
         };
         
-        return gulp.src(config.viewSrc + '/*.html').pipe(
+        return gulp.src(config.htmltemplates).pipe(
             $.inject(injectSrc, injectOptions)
         ).pipe(
-            gulp.dest(config.viewSrc)
+            gulp.dest(config.inject.destination)
         );
     });
     
-    gulp.task('serve', function () {
+    gulp.task('serve-dev', function () {
         var options = {
             script: config.startScript,
             delayTime: config.monitorDelay,
@@ -125,7 +166,7 @@
             }
         ).on(
             'start',
-            ['wiredep', 'inject', 'vet'],
+            ['wiredep', 'inject', 'vet', 'templatecache'],
             function () {
                 startBrowserSync();
                 log('*** nodemon started');
