@@ -1,41 +1,55 @@
-/*jslint node: true*/
+/*jslint node: true, vars: true, plusplus: true, devel: true, nomen: true, indent: 4, maxerr: 50 */
 module.exports = function () {
     'use strict';
+    var temp = './.tmp/';
+    var client = './src/client/';
+    var clientApp = client + 'app/';
+    var htmlView = client + 'view/';
+    var server = './src/server/';
+    var build = './build/';
+    var buildView = build + 'view/';
     
     var config = {
         // all js to vet
         alljs: [
-            '*.js',
-            'src/**/*.js',
-            '!src/lib/**/*.js',
-            '!node_modules/**/*.js'
+            client + '*.js',
+            client + '**/*.js',
+            '!' + client + 'lib/**/*.js'
         ],
-        
         allCss: [
-            'src/**/*.css'
+            client + '**/*.css'
         ],
-        
         bowerJson: './bower.json',
-        
+        browserReloadDelay: 1,
+        build: build,
+        client: client,
         env: {
             port: 3000,
             monitorDelay: 1
         },
-        
-        // Inject
-        customJs: './src/js/*.js',
-        customCss: './src/css/*.css',
-        injectIgnorePath: '/src',
-        wiredepIgnorePath: '../',
-        viewSrc: './src/view',
-        
-        startScript: './src/app.js',
-        
-        clientSrc: './src/',
-        
-        browserReloadDelay: 1,
-        
-        build: './build/'
+        htmltemplates: htmlView + '**/*.html',
+        inject: {
+            destination: buildView,
+            files: [
+                client + '/js/*.js',
+                client + '/css/*.css'
+            ],
+            ignorePath: client
+        },
+        startScript: server + 'app.js',
+        temp: temp,
+        templateCache: {
+            file: 'templates.js',
+            options: {
+                module: 'app.core',
+                standAlone: false,
+                root: htmlView
+            }
+        },
+        wiredep: {
+            destination: buildView,
+            ignorePath: '../../'
+        }
     };
     
     return config;
