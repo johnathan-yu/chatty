@@ -1,13 +1,18 @@
 var userModel = require('../models/user.model.js');
 
-exports.create = function(req, res) {
+exports.create = function(userData) {
     var user = new userModel({
-        firstName: req.body.firstName,
-        middleName: req.body.middleName,
-        lastName: req.body.lastName,
-        userName: req.body.userName,
-        email: req.body.email
+        firstName: userData.firstName,
+        middleName: userData.middleName,
+        lastName: userData.lastName,
+        userName: userData.userName,
+        email: userData.email,
+        password: userData.password
     });
 
-    user.save();
+    user.save(function(err, user) {
+        if (err) {
+            return console.error(err);
+        } 
+    });
 };

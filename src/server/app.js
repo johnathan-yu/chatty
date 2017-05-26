@@ -10,22 +10,18 @@
 
     var app = express();
     var port = process.env.PORT || 3000;
-    
+
     //Static
     app.use(logger('dev'));
-    //app.use(favicon(dirname + './src/server/favicon.ico'));
+    // app.use(favicon(dirname + './src/server/favicon.ico'));
     app.use(express.static('./src/client/view/'));
     app.use(bodyParser.json());
-    app.use(bodyParser.urlencoded({extended: false}))
+    app.use(bodyParser.urlencoded({ extended: false }))
     app.use(cookieParser());
 
-    //Load user route
-    var userRouter = require('../routes/user.route.js');
-    
-    app.get('/', function (req, res) {
-        res.send('Welcome to Chatty');
-    });
-    
+    //Load routes
+    require('../routes/all.routes.js')(app);
+
     app.listen(port, function () {
         console.log('Running on PORT: ' + port);
     });
