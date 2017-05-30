@@ -6,14 +6,20 @@
     var userController = require('../controllers/user.controller.js');
 
     router.get('/', function (req, res) {
-        res.status(200).json('GET for user is called.').end();
+        res.status(200).json('GET for user is called.');
     });
 
     router.post('/', function (req, res) {
-        var userData = req.body;
-        userController.create(userData);
-        res.status(200).json("POST for user is called.").end();
+        userController.create(req.body)
+            .then(function (data) {
+                console.log('User: ' + JSON.stringify(data));
+                res.status(200).json(data);
+            })
+            .catch(function (err) {
+                console.log('Error: ' + JSON.stringify(err));
+                res.status(400).json(err);
+            });
     });
-    
+
     module.exports = router;
 }());

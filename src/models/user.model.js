@@ -1,5 +1,7 @@
 var mongoose = require('mongoose');
-mongoose.connect('mongodb://localhost/chattydatabase')
+mongoose.connect('mongodb://localhost/chattydatabase', function (err) {
+    if (err) { console.log(err); }
+})
 mongoose.Promise = Promise;
 var Schema = mongoose.Schema;
 
